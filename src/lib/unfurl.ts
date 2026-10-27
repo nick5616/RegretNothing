@@ -5,6 +5,11 @@ export type Unfurled = { title: string | null; imageUrl: string | null; priceCen
 
 const MAX_BYTES = 1_500_000;
 const MAX_REDIRECTS = 3;
+const BROWSER_HEADERS = {
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+  accept: "text/html,application/xhtml+xml",
+  "accept-language": "en-US,en;q=0.9",
+};
 
 /** True for loopback, private, link-local, CGNAT and other non-public addresses. */
 export function isPrivateAddress(ip: string): boolean {
@@ -37,11 +42,9 @@ async function fetchHtml(raw: string): Promise<{ html: string; finalUrl: URL }> 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const res = await fetch(url, {
       redirect: "manual",
-      signal: AbortSignal.timeout(6000),
-      headers: {
-        "user-agent": "Mozilla/5.0 (compatible; RegretNothingBot/0.1; +https://regretnothing.com)",
-        accept: "text/html,application/xhtml+xml",
-      },
+      signal: AbortSignal.timeout(8000),
+      // Stores serve bot-labelled requests a wall; a browser's headers get the real page (same as repos/boards).
+      headers: BROWSER_HEADERS,
     });
     const next = res.headers.get("location");
     if (res.status >= 300 && res.status < 400 && next) {
@@ -73,7 +76,8 @@ const decode = (s: string) =>
     .replace(/&#0?39;|&apos;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
     .trim();
 
 function metaContent(html: string, keys: string[]): string | null {
@@ -117,9 +121,24 @@ function toCents(price: string | null | undefined): number | null {
   return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null;
 }
 
+// Amazon has no preview tags or JSON-LD; its title, picture and price live in its own markup.
+function amazonProduct(html: string): { name?: string; image?: string; price?: string } {
+  const title = /id="productTitle"[^>]*>([^<]+)</.exec(html)?.[1];
+  const image =
+    /id="landingImage"[^>]*data-old-hires="([^"]+)"/.exec(html)?.[1] ||
+    /"hiRes":"(https:[^"]+)"/.exec(html)?.[1] ||
+    /id="landingImage"[^>]*src="([^"]+)"/.exec(html)?.[1];
+  const price = /"displayPrice":"([^"]+)"/.exec(html)?.[1] ?? /a-offscreen">\s*\$([\d.,]+)/.exec(html)?.[1];
+  return { name: title, image: image || undefined, price };
+}
+
+/** Captcha and "are you a robot" pages: short, and nothing on them to read. */
+export const isBotWall = (html: string) =>
+  html.length < 20_000 && /captcha|robot check|are you a human|access denied/i.test(html);
+
 /** Pulls a product title, image and price out of a page's HTML. Exported for tests. */
 export function parseProductHtml(html: string, baseUrl: string): Unfurled {
-  const ld = jsonLdProduct(html);
+  const ld = /(^|\.)amazon\./.test(new URL(baseUrl).hostname) ? amazonProduct(html) : jsonLdProduct(html);
   const title =
     (ld.name ? decode(ld.name) : null) ??
     metaContent(html, ["og:title", "twitter:title"]) ??
@@ -145,9 +164,14 @@ export function parseProductHtml(html: string, baseUrl: string): Unfurled {
 }
 
 /** Best effort: many big retailers block bots, so callers must cope with nulls. */
-export async function unfurl(url: string): Promise<Unfurled> {
+export async function unfurl(url: string, tries = 2): Promise<Unfurled> {
   try {
     const { html, finalUrl } = await fetchHtml(url);
+    if (isBotWall(html) && tries > 1) {
+      // These walls come and go; a second knock often gets the real page.
+      await new Promise((r) => setTimeout(r, 700));
+      return unfurl(url, tries - 1);
+    }
     return parseProductHtml(html, finalUrl.toString());
   } catch {
     return { title: null, imageUrl: null, priceCents: null };

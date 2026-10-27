@@ -52,3 +52,16 @@ describe("bot walls", () => {
     expect(parseProductHtml(html, "https://www.amazon.com/dp/B00006JSUA")).toEqual({ title: null, imageUrl: null, priceCents: null });
   });
 });
+
+describe("amazon", () => {
+  it("reads Amazon's own markup, which has no preview tags", () => {
+    const html = `<span id="productTitle" class="a-size-large"> Lodge 10.25&quot; Cast Iron Skillet </span>
+      <img id="landingImage" data-old-hires="https://m.media-amazon.com/images/I/81.jpg" src="https://m.media-amazon.com/small.jpg">
+      <script>{"displayPrice":"$24.90"}</script>`;
+    expect(parseProductHtml(html, "https://www.amazon.com/dp/B00006JSUA")).toEqual({
+      title: 'Lodge 10.25" Cast Iron Skillet',
+      imageUrl: "https://m.media-amazon.com/images/I/81.jpg",
+      priceCents: 2490,
+    });
+  });
+});
