@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #fbf7f1;
+  --color-card: #ffffff;
+  --color-ink: #1f1a17;
+  --color-muted: #6f655d;
+  --color-line: #e8dfd4;
+  --color-pine: #1f5f4a;
+  --color-pine-soft: #e3efe9;
+  --color-berry: #a8243a;
+  --color-berry-soft: #f8e4e6;
+  --color-gold: #b7791f;
+  --font-display: ui-serif, Georgia, "Times New Roman", serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #171412;
+    --color-card: #221e1b;
+    --color-ink: #f3ece4;
+    --color-muted: #a99e94;
+    --color-line: #3a332e;
+    --color-pine: #6cc4a1;
+    --color-pine-soft: #1d3029;
+    --color-berry: #f07a8c;
+    --color-berry-soft: #3a1f24;
+    --color-gold: #e0a84f;
+  }
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+@utility field {
+  @apply w-full rounded-xl border border-line bg-card px-3.5 py-2.5 text-[15px] outline-none transition placeholder:text-muted/70 focus:border-pine focus:ring-2 focus:ring-pine/20;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-medium transition disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-pine text-paper hover:brightness-110;
+}
+
+@utility btn-quiet {
+  @apply btn border border-line bg-card text-ink hover:border-muted;
+}
