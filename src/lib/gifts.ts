@@ -52,11 +52,14 @@ export async function logIn(db: Db, email: string, password: string) {
 
 // ---------- the owner's own items ----------
 
+// http(s) only: these render as links and images on other people's screens.
+const webUrl = z.url({ protocol: /^https?$/, error: "Links need to start with http:// or https://" }).max(2000).nullable();
+
 export const itemSchema = z.object({
   kind: z.enum(["want", "have"]),
   title: z.string().trim().min(1, "Give it a name").max(200),
-  url: z.url().max(2000).nullable(),
-  imageUrl: z.url().max(2000).nullable(),
+  url: webUrl,
+  imageUrl: webUrl,
   priceCents: z.number().int().positive().nullable(),
   notes: z.string().trim().max(1000).nullable(),
   groupTargetCents: z.number().int().positive().nullable(),

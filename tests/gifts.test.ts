@@ -101,3 +101,13 @@ describe("group gifts", () => {
     expect(list!.wants.find((w) => w.id === item.id)!.pledgedCents).toBe(0);
   });
 });
+
+describe("item links", () => {
+  it("only accepts http(s) links and photos", async () => {
+    const { itemSchema } = await import("@/lib/gifts");
+    const base = { ...want, title: "Mug" };
+    expect(itemSchema.safeParse({ ...base, url: "https://etsy.com/listing/1", imageUrl: "https://i.etsystatic.com/a.jpg" }).success).toBe(true);
+    expect(itemSchema.safeParse({ ...base, url: "javascript:alert(1)" }).success).toBe(false);
+    expect(itemSchema.safeParse({ ...base, imageUrl: "data:image/svg+xml,<svg onload=alert(1)>" }).success).toBe(false);
+  });
+});

@@ -58,21 +58,43 @@ export async function logOutAction() {
 
 // ---------- the owner's list ----------
 
+const normalizeUrl = (raw: string) => (raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw) || null;
+
+export type LinkPreview = { title: string | null; imageUrl: string | null; price: string | null; site: string };
+
+/** Reads a pasted link so the add form can show its details before saving. */
+export async function previewLinkAction(raw: string): Promise<LinkPreview | null> {
+  await requireUser();
+  const url = normalizeUrl(raw.trim());
+  let site: string;
+  try {
+    site = new URL(url!).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+  const found = await unfurl(url!);
+  return {
+    title: found.title,
+    imageUrl: found.imageUrl,
+    price: found.priceCents ? (found.priceCents / 100).toFixed(2).replace(/\.00$/, "") : null,
+    site,
+  };
+}
+
 export async function addItemAction(_: FormState, fd: FormData): Promise<FormState> {
   const user = await requireUser();
-  const keep = fields(fd, ["kind", "url", "title", "price", "notes", "groupTarget"]);
-
-  let url: string | null = keep.url || null;
-  if (url && !/^https?:\/\//i.test(url)) url = `https://${url}`;
+  const keep = fields(fd, ["kind", "url", "title", "price", "imageUrl", "notes", "groupTarget"]);
+  const url = normalizeUrl(keep.url);
 
   let title = keep.title;
   let priceCents = parseDollars(keep.price);
-  let imageUrl: string | null = null;
-  if (url) {
+  let imageUrl: string | null = keep.imageUrl ? normalizeUrl(keep.imageUrl) : null;
+  // The form previews links itself; this only runs when it couldn't (e.g. no JavaScript).
+  if (url && fd.get("previewed") !== "1") {
     const found = await unfurl(url);
     title ||= found.title ?? "";
     priceCents ??= found.priceCents;
-    imageUrl = found.imageUrl;
+    imageUrl ??= found.imageUrl;
   }
   if (!title) {
     return {
