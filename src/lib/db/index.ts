@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
@@ -26,21 +26,35 @@ async function connect(): Promise<Db> {
   const dir = process.env.PGLITE_DIR ?? path.join(process.cwd(), ".data", "pglite");
   if (dir !== "memory://") mkdirSync(dir, { recursive: true });
   const client = dir === "memory://" ? new PGlite() : new PGlite(dir);
-  const db = drizzlePglite(client, { schema });
-  await migratePglite(db, { migrationsFolder: MIGRATIONS });
   // Both drivers expose the same query builder; the types differ only in result metadata.
-  return db as unknown as Db;
+  return drizzlePglite(client, { schema }) as unknown as Db;
 }
 
 // Survive Next.js dev hot reloads: a second PGlite on the same directory would fail to lock it.
-const globalForDb = globalThis as unknown as { __rnDb?: Promise<Db> };
+const globalForDb = globalThis as unknown as { __rnDb?: Promise<Db>; __rnJournal?: string };
+const JOURNAL = path.join(MIGRATIONS, "meta", "_journal.json");
 
 export function getDb(): Promise<Db> {
-  globalForDb.__rnDb ??= connect().catch((err) => {
-    // Don't cache a failed connection; let the next request retry.
-    globalForDb.__rnDb = undefined;
+  const forget = (err: unknown) => {
+    // Don't cache a failure; let the next request retry.
+    globalForDb.__rnDb = globalForDb.__rnJournal = undefined;
     throw err;
-  });
+  };
+  globalForDb.__rnDb ??= connect().catch(forget);
+
+  // PGlite outlives code changes in dev, so migrate whenever the migration list changes, not just at startup.
+  if (!process.env.DATABASE_URL) {
+    const journal = readFileSync(JOURNAL, "utf8");
+    if (globalForDb.__rnJournal !== journal) {
+      globalForDb.__rnJournal = journal;
+      globalForDb.__rnDb = globalForDb.__rnDb
+        .then(async (db) => {
+          await migratePglite(db as unknown as Parameters<typeof migratePglite>[0], { migrationsFolder: MIGRATIONS });
+          return db;
+        })
+        .catch(forget);
+    }
+  }
   return globalForDb.__rnDb;
 }
 
