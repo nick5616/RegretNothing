@@ -23,9 +23,14 @@ Node 20.9+ works. Node 20 is past end-of-life, so use Node 24 LTS.
 
 ## Production
 
-1. Create a Postgres database (Neon, Supabase, RDS…) and set `DATABASE_URL`.
-2. Set `APP_URL` to the public origin, e.g. `https://regretnothing.com`.
-3. Run `npm run db:migrate`, then `npm run build && npm start`. Any Node host works, including Vercel.
+Live at https://regretnothing.netlify.app: Netlify (Free plan) with a Neon Postgres database (Free plan, project `wispy-hill-70217167`, us-east-2).
+
+- `netlify.toml` runs `npm run db:migrate` before every build, so tables never lag the code.
+- Netlify env: `DATABASE_URL` (Neon's pooled connection string, production and preview contexts only) and `APP_URL`.
+- Without `DATABASE_URL`, both the build and the app refuse to run on Netlify rather than fall back to PGlite on a disk that vanishes.
+- Deploy by pushing once the GitHub repo is linked in Netlify. `netlify deploy --build --prod` also works from macOS, Linux or WSL, but not from plain Windows: the Next.js plugin creates symlinks that Windows blocks without Developer Mode.
+
+Any other Node host works too: set `DATABASE_URL` and `APP_URL`, run `npm run db:migrate`, then `npm run build && npm start`.
 
 ## Layout
 
