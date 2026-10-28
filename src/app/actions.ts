@@ -30,6 +30,7 @@ import {
 import { sendMail } from "@/lib/mail";
 import { formatCents, parseDollars } from "@/lib/money";
 import { greetName } from "@/lib/names";
+import { localPath } from "@/lib/paths";
 import { allow } from "@/lib/rateLimit";
 import { currentUser, endSession, ensureGifterHash, requireUser, setSessionCookie } from "@/lib/session";
 import { unfurl } from "@/lib/unfurl";
@@ -80,7 +81,8 @@ export async function logInAction(_: FormState, fd: FormData): Promise<FormState
   const result = await logIn(db, email, String(fd.get("password") ?? ""));
   if (!result) return { error: "That email and password don't match.", fields: { email } };
   await setSessionCookie(result.session);
-  redirect("/me");
+  // Only same-site paths, so a crafted login link can't bounce people elsewhere.
+  redirect(localPath(str(fd, "next")));
 }
 
 export async function logOutAction() {

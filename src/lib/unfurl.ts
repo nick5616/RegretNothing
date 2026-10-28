@@ -37,14 +37,21 @@ async function assertPublicUrl(raw: string): Promise<URL> {
   return url;
 }
 
-async function fetchHtml(raw: string): Promise<{ html: string; finalUrl: URL }> {
+/**
+ * Fetches a URL someone typed in, safely: public hosts only, every redirect re-checked, size capped, 8s timeout.
+ * Throws on anything else, so callers treat failure as "nothing to show".
+ */
+export async function fetchPublic(
+  raw: string,
+  { maxBytes = MAX_BYTES, accept = BROWSER_HEADERS.accept }: { maxBytes?: number; accept?: string } = {},
+): Promise<{ body: Buffer; contentType: string; finalUrl: URL }> {
   let url = await assertPublicUrl(raw);
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const res = await fetch(url, {
       redirect: "manual",
       signal: AbortSignal.timeout(8000),
       // Stores serve bot-labelled requests a wall; a browser's headers get the real page (same as repos/boards).
-      headers: BROWSER_HEADERS,
+      headers: { ...BROWSER_HEADERS, accept },
     });
     const next = res.headers.get("location");
     if (res.status >= 300 && res.status < 400 && next) {
@@ -57,16 +64,21 @@ async function fetchHtml(raw: string): Promise<{ html: string; finalUrl: URL }> 
     const reader = res.body.getReader();
     const chunks: Uint8Array[] = [];
     let size = 0;
-    while (size < MAX_BYTES) {
+    while (size < maxBytes) {
       const { done, value } = await reader.read();
       if (done) break;
       chunks.push(value);
       size += value.length;
     }
     await reader.cancel().catch(() => {});
-    return { html: Buffer.concat(chunks).toString("utf8"), finalUrl: url };
+    return { body: Buffer.concat(chunks), contentType: res.headers.get("content-type") ?? "", finalUrl: url };
   }
   throw new Error("too many redirects");
+}
+
+async function fetchHtml(raw: string): Promise<{ html: string; finalUrl: URL }> {
+  const { body, finalUrl } = await fetchPublic(raw);
+  return { html: body.toString("utf8"), finalUrl };
 }
 
 const decode = (s: string) =>

@@ -21,6 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${list.owner.name}'s list`,
     description: `See what ${first} would love, and what they already have, before you buy.`,
     openGraph: { title: `Shopping for ${first}?`, description: `${list.wants.length} ideas and ${list.haves.length} things they already have.` },
+    twitter: { card: "summary_large_image" },
   };
 }
 

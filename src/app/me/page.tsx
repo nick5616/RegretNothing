@@ -3,6 +3,7 @@ import { DeleteAccountForm } from "@/components/AccountForms";
 import { AddItemForm } from "@/components/AddItemForm";
 import { CopyLink } from "@/components/CopyLink";
 import { OwnerItem } from "@/components/OwnerItem";
+import { StoreButton } from "@/components/StoreButton";
 import { getDb } from "@/lib/db";
 import { ownItems } from "@/lib/gifts";
 import { requireUser } from "@/lib/session";
@@ -34,6 +35,7 @@ export default async function MyListPage() {
           <p className="mb-4 text-[15px] text-muted">Links, ideas, sizes. The more specific, the better the gift.</p>
           <div className="space-y-3">
             <AddItemForm kind="want" />
+            <StoreButton />
             {want.map((item) => <OwnerItem key={item.id} item={item} />)}
           </div>
         </section>

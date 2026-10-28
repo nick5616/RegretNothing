@@ -5,6 +5,14 @@ import { addItemAction, previewLinkAction, type LinkPreview } from "@/app/action
 
 const looksLikeUrl = (s: string) => /^(https?:\/\/)?[^\s/]+\.[a-z]{2,}(\/\S*)?$/i.test(s.trim());
 
+const siteOf = (url: string) => {
+  try {
+    return new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
+
 const storeName = (site: string) => {
   const name = site.split(".").at(-2) ?? site;
   return name.charAt(0).toUpperCase() + name.slice(1);
@@ -15,11 +23,26 @@ type Link =
   | { status: "found"; url: string; preview: LinkPreview }
   | { status: "manual"; url: string; site: string };
 
-export function AddItemForm({ kind }: { kind: "want" | "have" }) {
+/** What the store button or share sheet already knows about a product. Without a title, the link gets read as usual. */
+export type AddStart = { url: string; title?: string; imageUrl?: string; price?: string };
+
+type Props = { kind: "want" | "have"; start?: AddStart; onAdded?: () => void };
+
+export function AddItemForm({ kind, start, onAdded }: Props) {
   const [state, action, pending] = useActionState(addItemAction, undefined);
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState("");
-  const [link, setLink] = useState<Link | null>(null);
+  const [open, setOpen] = useState(!!start);
+  const [input, setInput] = useState(start?.url ?? "");
+  // Details read in the shopper's own browser beat anything our server could fetch, so that link isn't re-read.
+  const [given] = useState<Link | null>(() =>
+    start?.title
+      ? {
+          status: "found",
+          url: start.url,
+          preview: { title: start.title, imageUrl: start.imageUrl || null, price: start.price || null, site: siteOf(start.url) },
+        }
+      : null,
+  );
+  const [link, setLink] = useState<Link | null>(given);
   const [group, setGroup] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const latest = useRef("");
@@ -31,11 +54,16 @@ export function AddItemForm({ kind }: { kind: "want" | "have" }) {
     setInput("");
     setLink(null);
     setGroup(false);
-  }, [state]);
+    onAdded?.();
+  }, [state, onAdded]);
 
   // Read a pasted link as soon as typing pauses; ignore answers for links since replaced.
   useEffect(() => {
     const url = input.trim();
+    if (given && url === given.url) {
+      setLink(given);
+      return;
+    }
     if (!looksLikeUrl(url)) {
       setLink(null);
       return;
@@ -49,7 +77,7 @@ export function AddItemForm({ kind }: { kind: "want" | "have" }) {
       else setLink({ status: "manual", url, site: preview?.site ?? url });
     }, 350);
     return () => clearTimeout(timer);
-  }, [input]);
+  }, [input, given]);
 
   if (!open) {
     return (

@@ -11,7 +11,7 @@ function ErrorNote({ error }: { error?: string }) {
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30);
 
-export function SignUpForm() {
+export function SignUpForm({ host }: { host: string }) {
   const [state, action, pending] = useActionState(signUpAction, undefined);
   const [handle, setHandle] = useState(state?.fields?.handle ?? "");
   const [touched, setTouched] = useState(false);
@@ -37,7 +37,7 @@ export function SignUpForm() {
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Your list's link</span>
         <div className="flex items-center rounded-xl border border-line bg-card pl-3.5 focus-within:border-pine focus-within:ring-2 focus-within:ring-pine/20">
-          <span className="text-[15px] text-muted">regretnothing.com/u/</span>
+          <span className="text-[15px] text-muted">{host}/u/</span>
           <input
             name="handle"
             required
@@ -62,10 +62,11 @@ export function SignUpForm() {
   );
 }
 
-export function LogInForm() {
+export function LogInForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(logInAction, undefined);
   return (
     <form action={action} className="space-y-4">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <ErrorNote error={state?.error} />
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Email</span>
