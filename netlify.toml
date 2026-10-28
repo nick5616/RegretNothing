@@ -1,0 +1,4 @@
+[build]
+  # Migrations run first so a deploy never serves code ahead of its tables.
+  command = "npm run db:migrate && npm run build"
+  publish = ".next"

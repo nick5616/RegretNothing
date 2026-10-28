@@ -17,6 +17,10 @@ async function connect(): Promise<Db> {
     // Production: real Postgres. Migrations run via `npm run db:migrate`.
     return drizzlePg(new Pool({ connectionString: url, max: 5 }), { schema });
   }
+  // Serverless hosts have no lasting disk, so PGlite there would silently lose every list.
+  if (process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    throw new Error("DATABASE_URL is not set");
+  }
 
   // Local dev and tests: embedded Postgres, migrated on first use.
   const dir = process.env.PGLITE_DIR ?? path.join(process.cwd(), ".data", "pglite");
