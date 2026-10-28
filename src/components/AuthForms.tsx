@@ -75,6 +75,9 @@ export function LogInForm() {
         <span className="mb-1.5 block text-sm font-medium">Password</span>
         <input name="password" type="password" required autoComplete="current-password" className="field" />
       </label>
+      <p className="-mt-2 text-right text-sm">
+        <Link href="/forgot" className="text-muted underline hover:text-ink">Forgot your password?</Link>
+      </p>
       <button disabled={pending} className="btn-primary w-full">{pending ? "Logging in…" : "Log in"}</button>
       <p className="text-center text-sm text-muted">
         New here? <Link href="/signup" className="text-pine underline">Start a list</Link>

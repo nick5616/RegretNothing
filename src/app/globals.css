@@ -49,3 +49,100 @@ body {
 @utility btn-quiet {
   @apply btn border border-line bg-card text-ink hover:border-muted;
 }
+
+/* ---------- gift receipt ---------- */
+
+@keyframes rn-rise {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+}
+@keyframes rn-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+}
+@keyframes rn-sweep {
+  from { stroke-dasharray: 0 var(--c); }
+}
+@keyframes rn-photo {
+  from { opacity: 0; transform: scale(0.6) rotate(-8deg); }
+  60% { transform: scale(1.06) rotate(1deg); }
+}
+@keyframes rn-stamp {
+  from { opacity: 0; transform: scale(2.4) rotate(-24deg); }
+  70% { opacity: 1; transform: scale(0.94) rotate(-11deg); }
+  to { transform: scale(1) rotate(-12deg); }
+}
+@keyframes rn-shimmer {
+  to { background-position: 200% center; }
+}
+@keyframes rn-glow {
+  50% { opacity: 0.55; }
+}
+@keyframes rn-confetti {
+  to { transform: translate3d(var(--dx), 112vh, 0) rotate(var(--spin)); }
+}
+
+/* Each animated piece names its own delay; the final frame is the element's normal style, so print and reduced motion show it as-is. */
+.rn-rise { animation: rn-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--at, 0s); }
+.rn-fade { animation: rn-fade-up 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--at, 0s); }
+.rn-sweep { animation: rn-sweep 1.5s cubic-bezier(0.65, 0, 0.25, 1) both; animation-delay: var(--at, 0s); }
+.rn-photo { animation: rn-photo 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--at, 0s); }
+.rn-stamp { animation: rn-stamp 0.55s cubic-bezier(0.3, 1.4, 0.5, 1) both; animation-delay: var(--at, 0s); transform: rotate(-12deg); }
+.rn-glow { animation: rn-glow 2.8s ease-in-out infinite; animation-delay: var(--at, 0s); }
+
+.rn-shine {
+  background: linear-gradient(100deg, var(--color-berry) 0%, var(--color-gold) 30%, var(--color-berry) 60%, var(--color-gold) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rn-shimmer 6s linear infinite;
+}
+
+.rn-confetti {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 50;
+}
+.rn-confetti i {
+  position: absolute;
+  top: -4vh;
+  animation: rn-confetti var(--dur) cubic-bezier(0.25, 0.5, 0.45, 1) both;
+  animation-delay: var(--at);
+}
+
+/* The ticket: zigzag tear along the bottom, punched notches at the perforation. */
+.rn-ticket {
+  --zig: 10px;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--zig)) 100%;
+  padding-bottom: calc(var(--zig) + 1.75rem);
+}
+.rn-perf {
+  position: relative;
+  height: 28px;
+  margin-inline: -1.75rem;
+  background: linear-gradient(90deg, var(--color-line) 50%, transparent 0) center / 14px 2px repeat-x;
+}
+.rn-perf::before,
+.rn-perf::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-paper);
+}
+.rn-perf::before { left: -14px; }
+.rn-perf::after { right: -14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rn-rise, .rn-fade, .rn-sweep, .rn-photo, .rn-stamp, .rn-glow, .rn-shine { animation: none; }
+  .rn-confetti { display: none; }
+}
+
+@media print {
+  body { background: #fff; }
+  .rn-confetti { display: none; }
+  .rn-rise, .rn-fade, .rn-sweep, .rn-photo, .rn-stamp { animation: none; }
+}

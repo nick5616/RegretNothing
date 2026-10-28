@@ -8,10 +8,14 @@ const STEPS = [
   { title: "Share one link", body: "Family claims gifts or chips in together. You never see who got what." },
 ];
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
   if (await currentUser()) redirect("/me");
+  const { deleted } = await searchParams;
   return (
     <div className="pt-10 sm:pt-20">
+      {deleted ? (
+        <p role="status" className="mb-8 rounded-2xl bg-pine-soft px-4 py-3 text-pine">Your account and list are deleted. Thanks for trying RegretNothing.</p>
+      ) : null}
       <section className="max-w-2xl">
         <p className="mb-4 inline-block rounded-full bg-berry-soft px-3 py-1 text-sm font-medium text-berry">
           Fewer returns. Fewer regifts. Better gifts.

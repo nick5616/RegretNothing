@@ -1,22 +1,13 @@
 import { headers } from "next/headers";
+import { DeleteAccountForm } from "@/components/AccountForms";
 import { AddItemForm } from "@/components/AddItemForm";
 import { CopyLink } from "@/components/CopyLink";
-import { ItemCard } from "@/components/ItemCard";
+import { OwnerItem } from "@/components/OwnerItem";
 import { getDb } from "@/lib/db";
 import { ownItems } from "@/lib/gifts";
 import { requireUser } from "@/lib/session";
-import { deleteItemAction } from "../actions";
 
 export const metadata = { title: "My list" };
-
-function DeleteButton({ itemId }: { itemId: string }) {
-  return (
-    <form action={deleteItemAction} className="mt-2">
-      <input type="hidden" name="itemId" value={itemId} />
-      <button className="text-sm text-muted underline decoration-line hover:text-berry">Remove</button>
-    </form>
-  );
-}
 
 export default async function MyListPage() {
   const user = await requireUser();
@@ -43,9 +34,7 @@ export default async function MyListPage() {
           <p className="mb-4 text-[15px] text-muted">Links, ideas, sizes. The more specific, the better the gift.</p>
           <div className="space-y-3">
             <AddItemForm kind="want" />
-            {want.map((item) => (
-              <ItemCard key={item.id} item={item}><DeleteButton itemId={item.id} /></ItemCard>
-            ))}
+            {want.map((item) => <OwnerItem key={item.id} item={item} />)}
           </div>
         </section>
         <section>
@@ -53,12 +42,11 @@ export default async function MyListPage() {
           <p className="mb-4 text-[15px] text-muted">So nobody buys you a duplicate, and they can get things that go with it.</p>
           <div className="space-y-3">
             <AddItemForm kind="have" />
-            {have.map((item) => (
-              <ItemCard key={item.id} item={item}><DeleteButton itemId={item.id} /></ItemCard>
-            ))}
+            {have.map((item) => <OwnerItem key={item.id} item={item} />)}
           </div>
         </section>
       </div>
+      <DeleteAccountForm />
     </div>
   );
 }

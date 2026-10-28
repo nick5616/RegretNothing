@@ -27,6 +27,7 @@ Live at https://regretnothing.netlify.app: Netlify (Free plan) with a Neon Postg
 
 - `netlify.toml` runs `npm run db:migrate` before every build, so tables never lag the code.
 - Netlify env: `DATABASE_URL` (Neon's pooled connection string, production and preview contexts only) and `APP_URL`.
+- Email (password resets, gift receipts) goes out through `SMTP_URL`, e.g. `smtps://you%40gmail.com:APP-PASSWORD@smtp.gmail.com:465` with a Gmail app password, or Resend's SMTP once there's a domain. `MAIL_FROM` overrides the sender. Without it, nothing is sent: locally the message prints to the server console, and receipts tell gifters to bookmark the page instead.
 - Without `DATABASE_URL`, both the build and the app refuse to run on Netlify rather than fall back to PGlite on a disk that vanishes.
 - Deploy by pushing once the GitHub repo is linked in Netlify. `netlify deploy --build --prod` also works from macOS, Linux or WSL, but not from plain Windows: the Next.js plugin creates symlinks that Windows blocks without Developer Mode.
 
@@ -36,7 +37,9 @@ Any other Node host works too: set `DATABASE_URL` and `APP_URL`, run `npm run db
 
 | Path | What |
 | --- | --- |
-| `src/lib/gifts.ts` | Domain rules: accounts, items, claims, pledges, and the owner-blind public view |
+| `src/lib/gifts.ts` | Domain rules: accounts, items, claims, pledges, receipts, and the owner-blind public view |
+| `src/app/thanks/[id]` | The gift receipt a gifter lands on after claiming or chipping in. Its link is the key to change the gift from any device |
+| `src/lib/rateLimit.ts` / `mail.ts` | Postgres-backed rate limits; SMTP email |
 | `src/lib/auth.ts` / `session.ts` | scrypt passwords, hashed session tokens, anonymous gifter cookie |
 | `src/lib/unfurl.ts` | Paste-a-link metadata (JSON-LD → Open Graph → `<title>`), with SSRF guards |
 | `src/lib/db/` | Drizzle schema; `getDb()` picks Postgres or PGlite |

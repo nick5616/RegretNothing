@@ -35,17 +35,17 @@ describe("claims", () => {
     const item = await addItem(db, ownerId, { ...want, title: "Cast iron pan" });
     const alex = { name: "Alex", email: null };
 
-    expect(await claimItem(db, item.id, alex, "hash-alex", null)).toEqual({ ok: true });
+    expect(await claimItem(db, item.id, alex, "hash-alex", null)).toMatchObject({ ok: true });
     expect(await claimItem(db, item.id, { name: "Sam", email: null }, "hash-sam", null)).toEqual({ error: "taken" });
     expect(await unclaimItem(db, item.id, "hash-sam")).toBe(false);
 
     const asAlex = await publicList(db, "nick", { userId: null, gifterHash: "hash-alex" });
-    expect(asAlex!.wants.find((w) => w.id === item.id)!.claim).toEqual({ name: "Alex", mine: true });
+    expect(asAlex!.wants.find((w) => w.id === item.id)!.claim).toMatchObject({ name: "Alex", mine: true });
     const asSam = await publicList(db, "nick", { userId: null, gifterHash: "hash-sam" });
-    expect(asSam!.wants.find((w) => w.id === item.id)!.claim).toEqual({ name: "Alex", mine: false });
+    expect(asSam!.wants.find((w) => w.id === item.id)!.claim).toEqual({ name: "Alex", mine: false, receiptId: null });
 
     expect(await unclaimItem(db, item.id, "hash-alex")).toBe(true);
-    expect(await claimItem(db, item.id, { name: "Sam", email: null }, "hash-sam", null)).toEqual({ ok: true });
+    expect(await claimItem(db, item.id, { name: "Sam", email: null }, "hash-sam", null)).toMatchObject({ ok: true });
   });
 
   it("resolves simultaneous claims to a single winner", async () => {
@@ -92,7 +92,7 @@ describe("surprise protection", () => {
 describe("group gifts", () => {
   it("caps pledges at the goal and allows withdrawing", async () => {
     const item = await addItem(db, ownerId, { ...want, title: "Stand mixer", groupTargetCents: 30000 });
-    expect(await pledgeToItem(db, item.id, { name: "A", email: null, amountCents: 20000 }, "ga", null)).toEqual({ ok: true, remainingCents: 10000 });
+    expect(await pledgeToItem(db, item.id, { name: "A", email: null, amountCents: 20000 }, "ga", null)).toMatchObject({ ok: true, remainingCents: 10000 });
     expect(await pledgeToItem(db, item.id, { name: "B", email: null, amountCents: 15000 }, "gb", null)).toEqual({ error: "over_target", remainingCents: 10000 });
     expect(await claimItem(db, item.id, { name: "C", email: null }, "gc", null)).toEqual({ error: "not_claimable" });
 

@@ -56,6 +56,8 @@ export const items = pgTable(
     notes: text("notes"),
     // When set, the item is funded by pledges instead of claimed outright.
     groupTargetCents: integer("group_target_cents"),
+    // Set when the owner removes an item, so gifters who already claimed or chipped in keep their receipt.
+    removedAt: timestamp("removed_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -100,6 +102,26 @@ export const pledges = pgTable(
     check("pledges_amount_check", sql`${t.amountCents} > 0`),
   ],
 );
+
+export const passwordResets = pgTable(
+  "password_resets",
+  {
+    // sha256 of the emailed token, like sessions.
+    id: text("id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [index("password_resets_user_idx").on(t.userId)],
+);
+
+/** Fixed-window counters keyed by action and caller, e.g. "login:ip:1.2.3.4". */
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull(),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+});
 
 export type User = typeof users.$inferSelect;
 export type Item = typeof items.$inferSelect;

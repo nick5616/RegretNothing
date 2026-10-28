@@ -15,7 +15,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className="min-h-dvh antialiased">
-        <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-6">
+        <header className="mx-auto flex print:hidden max-w-5xl items-center justify-between px-4 py-5 sm:px-6">
           <Link href={user ? "/me" : "/"} className="font-display text-xl font-semibold tracking-tight">
             Regret<span className="text-berry">Nothing</span>
           </Link>
@@ -35,7 +35,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             )}
           </nav>
         </header>
-        <main className="mx-auto max-w-5xl px-4 pb-24 sm:px-6">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">{children}</main>
+        <footer className="mx-auto flex max-w-5xl gap-4 px-4 pb-10 text-sm text-muted sm:px-6 print:hidden">
+          <span>© RegretNothing</span>
+          <Link href="/privacy" className="underline decoration-line hover:text-ink">Privacy</Link>
+        </footer>
       </body>
     </html>
   );

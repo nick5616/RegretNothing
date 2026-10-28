@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { claimAction, pledgeAction, unclaimAction, withdrawAction } from "@/app/actions";
 import type { GifterWant } from "@/lib/gifts";
@@ -46,6 +47,7 @@ function ClaimControl({ item, handle }: { item: GifterWant; handle: string }) {
       <form action={unclaimAction} className="mt-3 flex items-center gap-3 text-sm">
         <Hidden item={item} handle={handle} />
         <span className="rounded-full bg-pine-soft px-2.5 py-1 font-medium text-pine">You're getting this ✓</span>
+        {item.claim.receiptId ? <Link href={`/thanks/${item.claim.receiptId}`} className="text-pine underline">Receipt</Link> : null}
         <button className="text-muted underline hover:text-ink">Undo</button>
       </form>
     );
@@ -72,7 +74,7 @@ function ClaimControl({ item, handle }: { item: GifterWant; handle: string }) {
       <ErrorNote error={state?.error} />
       <div className="flex flex-wrap gap-2">
         <input name="name" required placeholder="Your name" defaultValue={state?.fields?.name ?? name} key={name} className="field max-w-48 !py-2" />
-        <input name="email" type="email" placeholder="Email (optional, for reminders)" defaultValue={state?.fields?.email} className="field max-w-64 !py-2" />
+        <input name="email" type="email" placeholder="Email (optional, for your receipt)" defaultValue={state?.fields?.email} className="field max-w-64 !py-2" />
         <button disabled={pending} className="btn-primary !py-2 text-sm">{pending ? "Saving…" : "Claim it"}</button>
       </div>
       <p className="text-xs text-muted">Other gifters will see it's taken. {"The list's owner won't."}</p>
@@ -102,6 +104,7 @@ function PledgeControl({ item, handle }: { item: GifterWant; handle: string }) {
         <form action={withdrawAction} className="flex items-center gap-3 text-sm">
           <Hidden item={item} handle={handle} />
           <span className="rounded-full bg-pine-soft px-2.5 py-1 font-medium text-pine">You pledged {formatCents(item.myPledgeCents)}</span>
+          {item.myReceiptId ? <Link href={`/thanks/${item.myReceiptId}`} className="text-pine underline">Receipt</Link> : null}
           <button className="text-muted underline hover:text-ink">Withdraw</button>
         </form>
       ) : null}
@@ -112,7 +115,7 @@ function PledgeControl({ item, handle }: { item: GifterWant; handle: string }) {
           <div className="flex flex-wrap gap-2">
             <input name="amount" inputMode="decimal" required placeholder="$ amount" defaultValue={state?.fields?.amount} className="field max-w-28 !py-2" />
             <input name="name" required placeholder="Your name" defaultValue={state?.fields?.name ?? name} key={name} className="field max-w-48 !py-2" />
-            <input name="email" type="email" placeholder="Email (optional)" defaultValue={state?.fields?.email} className="field max-w-56 !py-2" />
+            <input name="email" type="email" placeholder="Email (optional, for your receipt)" defaultValue={state?.fields?.email} className="field max-w-56 !py-2" />
             <button disabled={pending} className="btn-primary !py-2 text-sm">{pending ? "Saving…" : "Pledge"}</button>
           </div>
           <p className="text-xs text-muted">A pledge is a promise, not a payment. Settle up with whoever buys it.</p>
