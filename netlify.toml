@@ -2,3 +2,8 @@
   # Migrations run first so a deploy never serves code ahead of its tables.
   command = "npm run db:migrate && npm run build"
   publish = ".next"
+
+# Declared outright: a build started from GitHub once skipped Netlify's automatic Next.js setup and shipped
+# static files only, so every page 404'd. With the plugin named here, every build gets the server function.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
