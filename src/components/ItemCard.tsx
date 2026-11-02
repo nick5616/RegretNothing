@@ -9,8 +9,22 @@ const host = (url: string) => {
   }
 };
 
-/** Shared item presentation; owner and gifter views add their own controls via children. */
-export function ItemCard({ item, muted, children }: { item: Item; muted?: boolean; children?: React.ReactNode }) {
+/**
+ * Shared item presentation; owner and gifter views add their own controls via children.
+ * `pledgedCents` is for gifter views only, so the owner never sees how a group gift is going.
+ */
+export function ItemCard({
+  item,
+  muted,
+  pledgedCents,
+  children,
+}: {
+  item: Item;
+  muted?: boolean;
+  pledgedCents?: number;
+  children?: React.ReactNode;
+}) {
+  const leftCents = item.groupTargetCents && pledgedCents !== undefined ? Math.max(0, item.groupTargetCents - pledgedCents) : null;
   return (
     <article className={`flex gap-4 rounded-2xl border border-line bg-card p-4 ${muted ? "opacity-60" : ""}`}>
       {item.imageUrl ? (
@@ -32,7 +46,12 @@ export function ItemCard({ item, muted, children }: { item: Item; muted?: boolea
           ) : null}
           {item.groupTargetCents ? (
             <span className="rounded-full bg-pine-soft px-2 py-0.5 text-xs font-medium text-pine">
-              Group gift · {formatCents(item.groupTargetCents)} goal
+              Group gift ·{" "}
+              {leftCents === null
+                ? `${formatCents(item.groupTargetCents)} goal`
+                : leftCents === 0
+                  ? "fully funded"
+                  : `${formatCents(leftCents)} left of ${formatCents(item.groupTargetCents)}`}
             </span>
           ) : null}
         </div>

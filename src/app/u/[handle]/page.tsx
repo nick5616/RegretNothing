@@ -54,7 +54,12 @@ export default async function PublicListPage({ params }: Props) {
           ) : (
             <div className="space-y-3">
               {list.wants.map((item) => (
-                <ItemCard key={item.id} item={item} muted={!!item.claim && !item.claim.mine}>
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  muted={!!item.claim && !item.claim.mine}
+                  pledgedCents={list.isOwner ? undefined : item.pledgedCents}
+                >
                   {list.isOwner ? null : <GifterActions item={item} handle={list.owner.handle} />}
                 </ItemCard>
               ))}
